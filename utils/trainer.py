@@ -83,9 +83,9 @@ class Trainer(object):
         for epoch in range(self.config['epochs']):
             adjust_learning_rate(self.optimizer, epoch, 0.1)
             # train for one epoch
-            self.train(epoch)
+            _, _ = self.train(epoch)
             # evaluate on validation set
-            prec1 = self.validate(epoch)
+            prec1, _ = self.validate(epoch)
             # remember best prec@1 and save checkpoint
             is_best = prec1 > best_prec1
             best_prec1 = max(prec1, best_prec1)
@@ -130,6 +130,7 @@ class Trainer(object):
                 info = 'Train: epoch: %d, loss: %.4f' %  (epoch, losses.avg)
                 pbar.update(1)
                 pbar.set_description(info)
+        return top1.avg, losses.avg
 
 
     def validate(self, epoch):
@@ -154,4 +155,4 @@ class Trainer(object):
                 info = 'Val: epoch: %d, accuracy: %.3f' % (epoch, top1.avg)
                 pbar.set_description(info)
                 pbar.update(1)
-        return top1.avg
+        return top1.avg, losses.avg

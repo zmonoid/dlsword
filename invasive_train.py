@@ -7,6 +7,7 @@ import time
 
 from dataset.imglist import ImageList
 import models
+from models.others import FinetuneModel
 from utils.trainer import Trainer
 
 
@@ -92,11 +93,12 @@ val_loader = torch.utils.data.DataLoader(
 Training Setup
 """
 model = models.__dict__[config['model']](pretrained=True)
-model.fc = nn.Linear(512, config['num_classes'])
+model = FinetuneModel(model, config['model'], config['num_classes'])
 model = torch.nn.DataParallel(model).cuda()
+
 criterion = nn.CrossEntropyLoss().cuda()
 optimizer = torch.optim.SGD(
-    model.module.fc.parameters(), 
+    model.module.classifier.parameters(), 
     config['initial_lr'], 
     momentum=config['momentum'],
     weight_decay=config['weight_declay'])
@@ -107,7 +109,8 @@ trainer = Trainer(model,
     criterion,
     config,
     train_loader, 
-    val_loader
+    val_loader,
     )
+
 
 trainer.run()
