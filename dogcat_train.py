@@ -4,6 +4,7 @@ import os
 import csv
 import random
 import time
+import glob
 
 from dataset.imglist import ImageList
 import models
@@ -26,25 +27,28 @@ Configuration
 parser = argparse.ArgumentParser(description='PyTorch Image Training')
 parser.add_argument(
     '--config',
-    default='./config/invasive.yaml',
+    default='./config/dogcat.yaml',
     type=str,
     help='training configuration file')
 args = parser.parse_args()
 with open(args.config, 'r') as f:
     config = yaml.load(f)
+
+
 """
 Data Loading
 """
 root_dir = config['data_folder']
-label_file = os.path.join(root_dir, 'train_labels.csv')
+train_dir = os.path.join(root_dir, 'train')
 
 imgs = []
-with open(label_file, 'rb') as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        img = os.path.join(root_dir, 'train', row['name'] + '.jpg')
-        label = int(row['invasive'])
-        imgs.append((img, label))
+img_list = glob.glob(train_dir + '/*.jpg')
+for img in img_list:
+    img_name = img.split('/')[-1]
+    if img_name.startswith('cat'):
+        imgs.append((img, 0))
+    elif img_name.startswith('dog'):
+        imgs.append((img, 1))
 
 random.shuffle(imgs)
 split_index = int(config['train_val_split'] * len(imgs))
@@ -97,6 +101,7 @@ model = models.__dict__[config['model']](pretrained=config['pretrain'])
 model, last_layer, feature_layer = finetune(model, config['model'], config['num_classes'])
 model = torch.nn.DataParallel(model).cuda()
 
+
 train_regime = {
     0: 0.1,
     5: 0.01,
@@ -107,7 +112,7 @@ train_regime = {
 criterion = nn.CrossEntropyLoss().cuda()
 optimizer = torch.optim.Adam([
     {'params': last_layer.parameters(), 'lr': 1e-3},
-    {'params': feature_layer.parameters(), 'lr': 1e-4}]
+    {'params': feature_layer.parameters(), 'lr': 1e-5}]
 )
 
 trainer = Trainer(
