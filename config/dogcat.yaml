@@ -9,4 +9,8 @@ model: densenet161
 pretrain: True
 num_classes: 2
 train_val_split: 0.8
+regime:
+  0: 0.1
+  30: 0.01
+  90: 0.001
 

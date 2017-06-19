@@ -1,4 +1,6 @@
+import torch
 import torch.nn as nn
+from PIL import Image, ImageDraw, ImageFont
 
 def finetune(model, arch, num_classes):
     if arch.startswith('resnet'):
@@ -35,3 +37,11 @@ def get_input_size(model):
         scale_size = 256
         crop_size = 229
     return scale_size, crop_size
+
+def predict(model, img_path, preprocess):
+    img = Image.open(img_path)
+    input_var = preprocess(img).unsqueeze_(0)
+    input_var = torch.autograd.Variable(input_var)
+    softmax = nn.Softmax()
+    prob = softmax(model(input_var)).data.cpu().numpy()
+    return prob

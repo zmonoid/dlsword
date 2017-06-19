@@ -8,6 +8,13 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+import glob
+from utils import finetune
+
+import sys
+sys.path.append('../')
+import models
 
 
 class AverageMeter(object):
@@ -107,6 +114,10 @@ class Trainer(object):
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.regime = regime
+        
+        self.start_epoch = 0
+        self.best_prec1 = 0.0
+
         self.log_folder = "logs/" + "_".join([
             config['name'], config['model'],
             str(config['batch_size']),
@@ -119,9 +130,9 @@ class Trainer(object):
             yaml.dump(config, f)
 
     def run(self):
-        best_prec1 = 0.0
+        best_prec1 = self.best_prec1
         logs = []
-        for epoch in range(self.config['epochs']):
+        for epoch in range(self.start_epoch, self.config['epochs']):
             adjust_learning_rate(self.optimizer, epoch, self.regime)
             # train for one epoch
             train_acc, train_loss = self.train(epoch)
@@ -146,7 +157,7 @@ class Trainer(object):
         # switch to train mode
         self.model.train()
         with tqdm(total=len(self.train_loader)) as pbar:
-            for i, (input, target) in enumerate(self.train_loader):
+            for i, (input, target, _) in enumerate(self.train_loader):
                 # measure data loading time
                 target = target.cuda(async=True)
                 input_var = torch.autograd.Variable(input)
@@ -176,7 +187,7 @@ class Trainer(object):
         # switch to evaluate mode
         self.model.eval()
         with tqdm(total=len(self.val_loader)) as pbar:
-            for i, (input, target) in enumerate(self.val_loader):
+            for i, (input, target, _) in enumerate(self.val_loader):
                 target = target.cuda(async=True)
                 input_var = torch.autograd.Variable(input, volatile=True)
                 target_var = torch.autograd.Variable(target, volatile=True)
@@ -192,3 +203,8 @@ class Trainer(object):
                 pbar.set_description(info)
                 pbar.update(1)
         return top1.avg, losses.avg
+    
+
+
+
+
