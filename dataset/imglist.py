@@ -29,3 +29,39 @@ class ImageList(data.Dataset):
 
     def __len__(self):
         return len(self.items)
+
+
+class PointList(data.Dataset):
+    """
+    items should be like a list of form:
+    [(img1_path, label1), (img2_path, label2), ...]
+    """
+    def __init__(self, items, transform=None, target_transform=None):
+        self.items = items
+        self.transform = transform
+        self.target_transform = target_transform
+
+    def __getitem__(self, index):
+        point, target = self.items[index]
+        if self.transform is not None:
+            point = self.transform(point)
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+        return point, target
+
+    def __len__(self):
+        return len(self.items)
+
+class NumData(data.Dataset):
+    def __init__(self, X, Y, transform=None):
+        self.X = list(X)
+        self.Y = list(Y)
+        self.transform = transform
+
+    def __getitem__(self, index):
+        x = self.X[index]
+        y = self.Y[index]
+        return x, y
+
+    def __len__(self):
+        return len(self.X)

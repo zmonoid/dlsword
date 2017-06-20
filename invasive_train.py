@@ -41,7 +41,7 @@ parser.add_argument(
     help='To test a model')
 parser.add_argument(
     '--repeat',
-    default=10,
+    default=2,
     type=int,
     help='To repeat test')
 parser.add_argument(
@@ -204,8 +204,9 @@ else:
                     pbar.update(1)
             result += np.array(probs_list)
         
+        result /= args.repeat
+        output = zip(names_list, result)
 
-        output = zip(names_list, prob)
         with open(os.path.join(args.test, 'result_%s.csv' % checkpoint['epoch']), 'w') as f:
             f.write('name,invasive\n')
             for name, prob in output:
