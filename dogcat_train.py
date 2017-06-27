@@ -11,7 +11,7 @@ import numpy as np
 import cv2
 
 
-from dataset.imglist import ImageList
+from dataset.custom import ImageList
 import models
 
 from utils.trainer import Trainer
@@ -63,6 +63,7 @@ else:
 """
 Data Loading
 """
+fold = 5
 root_dir = config['data_folder']
 train_dir = os.path.join(root_dir, 'train')
 test_dir = os.path.join(root_dir, 'test')
@@ -77,7 +78,8 @@ for img in img_list:
         imgs.append((img, 1))
 
 random.shuffle(imgs)
-split_index = int(config['train_val_split'] * len(imgs))
+split_indexs = [int(0.2*x*len(imgs)) for x in range(fold)]
+# split_index = int(config['train_val_split'] * len(imgs))
 train_list = imgs[:split_index]
 val_list = imgs[split_index:]
 

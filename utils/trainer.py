@@ -116,7 +116,7 @@ class Trainer(object):
         self.regime = regime
         
         self.start_epoch = 0
-        self.best_prec1 = 0.0
+        self.best_loss = float('inf')
 
         self.log_folder = "logs/" + "_".join([
             config['name'], config['model'],
@@ -130,7 +130,8 @@ class Trainer(object):
             yaml.dump(config, f)
 
     def run(self):
-        best_prec1 = self.best_prec1
+        best_loss = self.best_loss
+        best_prec = 0.0
         logs = []
         for epoch in range(self.start_epoch, self.config['epochs']):
             adjust_learning_rate(self.optimizer, epoch, self.regime)
@@ -140,14 +141,16 @@ class Trainer(object):
             val_acc, val_loss = self.validate(epoch)
             logs.append((train_acc, train_loss, val_acc, val_loss))
             # remember best prec@1 and save checkpoint
-            is_best = val_acc > best_prec1
-            best_prec1 = max(val_acc, best_prec1)
+            is_best = val_loss < best_loss
+            best_loss = val_loss if val_loss < best_loss else best_loss
+            best_prec = val_acc if val_acc > best_prec else best_prec
             save_checkpoint({
                 'epoch': epoch,
                 'arch': self.config['model'],
                 'name': self.config['name'],
                 'state_dict': self.model.state_dict(),
-                'best_prec1': best_prec1,
+                'best_loss': best_loss,
+                'best_prec1': best_prec,
             }, self.log_folder, is_best)
             plot_save(logs, self.log_folder)
 
