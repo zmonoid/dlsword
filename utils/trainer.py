@@ -1,7 +1,6 @@
 import torch
 from datetime import datetime
 import os
-import csv
 import shutil
 import yaml
 from tqdm import tqdm
@@ -10,13 +9,9 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
-import glob
-from utils import finetune
 
 import sys
 sys.path.append('../')
-import models
 
 
 class AverageMeter(object):
@@ -76,6 +71,7 @@ def accuracy(output, target, topk=(1, )):
 def plot_save(logs, log_folder):
 
     with open(os.path.join(log_folder, 'log.csv'), 'w') as f:
+        f.write('epoch,train_acc,train_loss,val_acc,val_loss\n')
         for idx in range(len(logs)):
             train_acc, train_loss, val_acc, val_loss = logs[idx]
             f.write('%d,%f,%f,%f,%f\n' %
@@ -117,16 +113,13 @@ class Trainer(object):
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.regime = regime
-        
+
         self.start_epoch = 0
         self.best_loss = float('inf')
 
         self.log_folder = "logs/" + "_".join([
-            config['name'], config['model'],
-            str(config['batch_size']),
-            str(config['initial_lr']),
-            str(config['pretrain']),
-            str(datetime.now())
+            config['name'], config['model'], str(config['batch_size']),
+            str(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"))
         ])
         os.mkdir(self.log_folder)
         with open(os.path.join(self.log_folder, 'config.yaml'), 'w') as f:
@@ -209,8 +202,3 @@ class Trainer(object):
                 pbar.set_description(info)
                 pbar.update(1)
         return top1.avg, losses.avg
-    
-
-
-
-
