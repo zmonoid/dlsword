@@ -71,8 +71,7 @@ if args.test is None:
         train_loader = get_loader(train_list, config, 'train')
         val_loader = get_loader(val_list, config, 'val')
         model = models.__dict__[config['model']](pretrained=config['pretrain'])
-        model, last_layer, feature_layer = finetune(model, config['model'],
-                                                    config['num_classes'])
+        model, last_layer, feature_layer = finetune(model, config)
         model = torch.nn.DataParallel(model).cuda()
         criterion = nn.CrossEntropyLoss().cuda()
         optimizer = torch.optim.Adam([{
@@ -110,9 +109,10 @@ else:
     def test_session(log_folder, idx):
         os.environ['CUDA_VISIBLE_DEVICES'] = str(idx)
         model = models.__dict__[config['model']]()
+        model, last_layer, feature_layer = finetune(model, config)
+        model = torch.nn.DataParallel(model).cuda()
         best_model = sorted(glob.glob(log_folder + '/model_best*'))[-1]
         checkpoint = torch.load(best_model)
-        print model
         model.load_state_dict(checkpoint['state_dict'])
         model.eval()
 
@@ -123,8 +123,7 @@ else:
         with tqdm(total=len(test_loader)) as pbar:
             for i, (input, target, names) in enumerate(test_loader):
                 input_var = torch.autograd.Variable(input, volatile=True)
-                prob = np.clip(
-                    softmax(model(input_var)).data.cpu().numpy(), 0.01, 0.99)
+                prob = softmax(model(input_var)).data.cpu().numpy()
                 img_id = [item.split('/')[-1].split('.')[0] for item in names]
                 names_list += img_id
                 probs_list += [item for item in prob]
@@ -139,6 +138,8 @@ else:
             for name, prob in output:
                 f.write('%s,%f\n' % (name, prob[1]))
 
+    logs_list = glob.glob(args.test + '*')
+
     plist = [
         Process(target=test_session, args=(item, idx))
         for idx, item in enumerate(logs_list)
@@ -146,7 +147,7 @@ else:
 
     for p in plist:
         p.start()
-        time.sleep(1.5)
+        time.sleep(2)
 
     for p in plist:
         p.join()
