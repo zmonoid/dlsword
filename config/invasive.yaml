@@ -4,7 +4,7 @@ initial_lr: 0.1
 momentum: 0.9
 weight_declay: 0.0001
 epochs: 90
-data_folder: /home/bzhou/Data/invasive
+data_folder: /home/bzhou/data/invasive
 model: densenet161
 pretrain: True
 print_freq: 10

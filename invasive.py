@@ -39,7 +39,7 @@ if args.test is None:
     with open(args.config, 'r') as f:
         config = yaml.load(f)
 else:
-    logs_list = glob.glob(args.test)
+    logs_list = glob.glob(args.test + '*')
     with open(os.path.join(logs_list[-1], 'config.yaml'), 'r') as f:
         config = yaml.load(f)
 """
@@ -112,6 +112,7 @@ else:
         model = models.__dict__[config['model']]()
         best_model = sorted(glob.glob(log_folder + '/model_best*'))[-1]
         checkpoint = torch.load(best_model)
+        print model
         model.load_state_dict(checkpoint['state_dict'])
         model.eval()
 
@@ -138,7 +139,10 @@ else:
             for name, prob in output:
                 f.write('%s,%f\n' % (name, prob[1]))
 
-    plist = [Process(target=test_session, args=item) for item in logs_list]
+    plist = [
+        Process(target=test_session, args=(item, idx))
+        for idx, item in enumerate(logs_list)
+    ]
 
     for p in plist:
         p.start()
