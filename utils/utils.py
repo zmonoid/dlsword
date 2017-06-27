@@ -1,6 +1,18 @@
 import torch
 import torch.nn as nn
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
+import sys
+import cv2
+import numpy as np
+import torch.nn as nn
+
+sys.path.append("../")
+
+from dataset.custom import ImageList
+import torchvision.transforms as transforms
+
+normalize = transforms.Normalize(
+    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
 def finetune(model, arch, num_classes):
     if arch.startswith('resnet'):
@@ -45,3 +57,55 @@ def predict(model, img_path, preprocess):
     softmax = nn.Softmax()
     prob = softmax(model(input_var)).data.cpu().numpy()
     return prob
+
+
+
+def get_loader(img_list, config, mode):
+    scale_size, crop_size = get_input_size(config['model'])
+    data_transforms = {
+        'train': transforms.Compose([
+            transforms.Scale(scale_size),
+            transforms.RandomSizedCrop(crop_size),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            normalize
+        ]),
+        'val': transforms.Compose([
+            transforms.Scale(crop_size),
+            transforms.CenterCrop(crop_size),
+            transforms.ToTensor(),
+            normalize
+        ]),
+    }
+    data_set = ImageList(img_list, data_transforms[mode])
+    batch_size = {'train':config['batch_size'], 'val':config['batch_size']*8, 'vis':1}
+    data_loader = torch.utils.data.DataLoader(
+        data_set,
+        batch_size=batch_size[mode],
+        shuffle=True if mode == 'train' else False,
+        num_workers=4,
+        pin_memory=True,)
+
+    return data_loader
+
+
+def play_data(imgs, model, config, sformat):
+    scale_size, crop_size = get_input_size(config['model'])
+    preprocess=transforms.Compose([
+        transforms.Scale(crop_size),
+        transforms.CenterCrop(crop_size),
+        transforms.ToTensor(),
+        normalize,
+    ])
+    for img_, label in imgs:
+        prob = predict(model, img_, preprocess)[0]
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        img = cv2.imread(img_)
+        info = sformat % tuple(prob)
+        cv2.putText(img, info,(20,20), font, 0.5,(0,255,0),1,cv2.LINE_AA)
+        cv2.imshow('image', img)
+        is_invasive = prob[1] > prob[0]
+        if is_invasive != label:
+            cv2.waitKey(0)
+            print 'Wrong: %s' % img_
+

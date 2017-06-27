@@ -5,6 +5,8 @@ import csv
 import shutil
 import yaml
 from tqdm import tqdm
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
@@ -72,6 +74,7 @@ def accuracy(output, target, topk=(1, )):
 
 
 def plot_save(logs, log_folder):
+
     with open(os.path.join(log_folder, 'log.csv'), 'w') as f:
         for idx in range(len(logs)):
             train_acc, train_loss, val_acc, val_loss = logs[idx]
