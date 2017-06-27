@@ -92,6 +92,10 @@ if args.test is None:
 
         trainer.run()
 
+    #train_index = range(len(imgs))
+    #val_index = range(100)
+    #train_session(0, train_index, val_index)
+
     plist = [
         Process(target=train_session, args=(idx, train_index, val_index))
         for idx, (train_index, val_index) in enumerate(kf)
@@ -112,6 +116,7 @@ else:
         model, last_layer, feature_layer = finetune(model, config)
         model = torch.nn.DataParallel(model).cuda()
         best_model = sorted(glob.glob(log_folder + '/model_best*'))[-1]
+
         checkpoint = torch.load(best_model)
         model.load_state_dict(checkpoint['state_dict'])
         model.eval()
@@ -140,6 +145,7 @@ else:
 
     logs_list = glob.glob(args.test + '*')
 
+    #test_session(logs_list[0], 1)
     plist = [
         Process(target=test_session, args=(item, idx))
         for idx, item in enumerate(logs_list)
