@@ -1,6 +1,6 @@
-
 from PIL import Image, ImageOps
 import torch.utils.data as data
+
 
 def default_loader(path):
     """
@@ -8,11 +8,13 @@ def default_loader(path):
     """
     return Image.open(path).convert('RGB')
 
+
 class ImageList(data.Dataset):
     """
     items should be like a list of form:
     [(img1_path, label1), (img2_path, label2), ...]
     """
+
     def __init__(self, items, transform=None, target_transform=None):
         self.items = items
         self.transform = transform
@@ -21,7 +23,7 @@ class ImageList(data.Dataset):
     def __getitem__(self, index):
         path, target = self.items[index]
         img = default_loader(path)
-        img = ImageOps.equalize(img)
+        #img = ImageOps.equalize(img)
         if self.transform is not None:
             img = self.transform(img)
         if self.target_transform is not None:
@@ -30,7 +32,6 @@ class ImageList(data.Dataset):
 
     def __len__(self):
         return len(self.items)
-
 
 
 class NumData(data.Dataset):

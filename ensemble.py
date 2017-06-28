@@ -8,6 +8,7 @@ args = parser.parse_args()
 
 fnames = glob.glob(args.logs + '*/result_*.csv')
 fnames = sorted(fnames)
+fnames = [x for x in fnames if 'inception' not in x]
 for name in fnames:
     print name
 

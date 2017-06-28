@@ -5,7 +5,7 @@ momentum: 0.9
 weight_declay: 0.0001
 epochs: 50
 data_folder: /home/bzhou/data/invasive
-model: inception_v3
+model: resnet101
 pretrain: True
 print_freq: 10
 num_classes: 2
